@@ -19,6 +19,15 @@ type Resident = {
   green: boolean; // wristband status
 };
 
+type HealthSnapshot = {
+  heartRate: number;
+  spo2: number;
+  steps: number;
+  battery: number;
+  lastSync: number;
+  watchOnline: boolean;
+};
+
 type Message = { id: string; fromMe: boolean; text: string; ts: number };
 
 type ThreadMap = Record<string, Message[]>;
@@ -111,6 +120,21 @@ const MOCK_RESIDENTS: Resident[] = [
   { id: "11", name: "Pat S.", bio: "Walking group, cinema, puzzles.", newResident: true, green: true },
   { id: "12", name: "Kim F.", bio: "Art class, museums, brunch.", newResident: false, green: false },
 ];
+
+const MOCK_HEALTH: Record<string, HealthSnapshot> = {
+  "1": { heartRate: 68, spo2: 98, steps: 3200, battery: 82, lastSync: Date.now() - 2 * 60 * 1000, watchOnline: true },
+  "2": { heartRate: 74, spo2: 97, steps: 2100, battery: 56, lastSync: Date.now() - 8 * 60 * 1000, watchOnline: true },
+  "3": { heartRate: 63, spo2: 99, steps: 4500, battery: 91, lastSync: Date.now() - 1 * 60 * 1000, watchOnline: true },
+  "4": { heartRate: 70, spo2: 98, steps: 5200, battery: 67, lastSync: Date.now() - 3 * 60 * 1000, watchOnline: true },
+  "5": { heartRate: 82, spo2: 95, steps: 1200, battery: 44, lastSync: Date.now() - 30 * 60 * 1000, watchOnline: false },
+  "6": { heartRate: 61, spo2: 99, steps: 6400, battery: 73, lastSync: Date.now() - 5 * 60 * 1000, watchOnline: true },
+  "7": { heartRate: 77, spo2: 96, steps: 2800, battery: 59, lastSync: Date.now() - 7 * 60 * 1000, watchOnline: true },
+  "8": { heartRate: 71, spo2: 98, steps: 1900, battery: 38, lastSync: Date.now() - 12 * 60 * 1000, watchOnline: false },
+  "9": { heartRate: 65, spo2: 99, steps: 7200, battery: 84, lastSync: Date.now() - 90 * 1000, watchOnline: true },
+  "10": { heartRate: 88, spo2: 95, steps: 900, battery: 33, lastSync: Date.now() - 40 * 60 * 1000, watchOnline: false },
+  "11": { heartRate: 69, spo2: 98, steps: 5400, battery: 79, lastSync: Date.now() - 4 * 60 * 1000, watchOnline: true },
+  "12": { heartRate: 72, spo2: 97, steps: 2500, battery: 62, lastSync: Date.now() - 6 * 60 * 1000, watchOnline: true },
+};
 
 // —————— Messaging hook (mock + persistence) ——————
 function useMessageStore() {
@@ -291,6 +315,195 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
   );
 }
 
+// —————— Admin dashboard (demo only) ——————
+function AdminPanel({
+  open,
+  onClose,
+  people,
+  health,
+  onRefresh,
+}: {
+  open: boolean;
+  onClose: () => void;
+  people: Resident[];
+  health: Record<string, HealthSnapshot>;
+  onRefresh: () => void;
+}) {
+  const [email, setEmail] = useState("admin@radiance.com");
+  const [password, setPassword] = useState("connect123");
+  const [error, setError] = useState("");
+  const [authed, setAuthed] = useState(false);
+
+  if (!open) return null;
+
+  const onlineCount = Object.values(health).filter((h) => h.watchOnline).length;
+  const batteryLow = Object.values(health).filter((h) => h.battery < 40).length;
+  const greens = people.filter((p) => p.green).length;
+
+  const authenticate = () => {
+    if (email.trim().toLowerCase() === "admin@radiance.com" && password === "connect123") {
+      setAuthed(true);
+      setError("");
+    } else {
+      setError("Demo credentials are admin@radiance.com / connect123");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Admin portal">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-y-0 right-0 w-full sm:w-[520px] bg-white shadow-2xl p-4 sm:p-6 overflow-y-auto">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-xs uppercase font-semibold text-gray-500">Admin portal</div>
+            <h2 className="text-xl font-bold text-gray-900">Smart watch oversight</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Live vitals streamed from each Radiance wrist device. The green light shown on the watch is mirrored
+              here so admins can see who is open to connect.
+            </p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100" aria-label="Close admin panel">
+            ✕
+          </button>
+        </div>
+
+        {!authed ? (
+          <div className="mt-4 space-y-3 bg-[#f6fbf8] border border-[#d9eade] rounded-2xl p-4">
+            <div className="text-sm text-gray-700 font-semibold">Demo login</div>
+            <label className="block text-sm text-gray-700">
+              Email
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 w-full border rounded-xl px-3 py-2"
+              />
+            </label>
+            <label className="block text-sm text-gray-700">
+              Password
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 w-full border rounded-xl px-3 py-2"
+              />
+            </label>
+            {error && <div className="text-sm text-red-600">{error}</div>}
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-gray-500">Use the provided credentials to enter the admin demo.</div>
+              <button
+                onClick={authenticate}
+                className="px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 shadow"
+              >
+                Sign in
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-4 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl border bg-[#eff7f2] p-3">
+                <div className="text-xs text-gray-500 uppercase font-semibold">Watches online</div>
+                <div className="text-2xl font-bold text-emerald-700">{onlineCount} / {people.length}</div>
+                <p className="text-xs text-gray-600 mt-1">Green light confirms each online watch is ready to send vitals.</p>
+              </div>
+              <div className="rounded-2xl border bg-white p-3">
+                <div className="text-xs text-gray-500 uppercase font-semibold">Open to connect</div>
+                <div className="text-2xl font-bold text-emerald-700">{greens}</div>
+                <p className="text-xs text-gray-600 mt-1">Matches the wristband's green indicator for quick oversight.</p>
+              </div>
+              <div className="rounded-2xl border bg-white p-3">
+                <div className="text-xs text-gray-500 uppercase font-semibold">Battery warnings</div>
+                <div className="text-2xl font-bold text-amber-600">{batteryLow}</div>
+                <p className="text-xs text-gray-600 mt-1">Below 40% and worth reminding during rounds.</p>
+              </div>
+              <div className="rounded-2xl border bg-white p-3">
+                <div className="text-xs text-gray-500 uppercase font-semibold">Last refresh</div>
+                <div className="text-2xl font-bold text-gray-900">{new Date().toLocaleTimeString()}</div>
+                <div className="mt-1 flex items-center gap-2 text-xs">
+                  <button
+                    onClick={onRefresh}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs hover:bg-emerald-700"
+                  >
+                    Pull newest vitals
+                  </button>
+                  <span className="text-gray-500">Simulates the watch sync event.</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-sm font-semibold text-gray-700">Resident watches</div>
+            <div className="rounded-2xl border overflow-hidden">
+              <div className="grid grid-cols-5 text-xs font-semibold text-gray-500 bg-gray-50 px-3 py-2">
+                <div className="col-span-2">Resident</div>
+                <div>Vitals</div>
+                <div>Battery</div>
+                <div>Last sync</div>
+              </div>
+              <div className="divide-y">
+                {people.map((p) => {
+                  const stats = health[p.id];
+                  return (
+                    <div key={p.id} className="grid grid-cols-5 items-center px-3 py-3 text-sm">
+                      <div className="col-span-2 flex items-center gap-2 min-w-0">
+                        <Avatar alt={p.name} />
+                        <div className="min-w-0">
+                          <div className="font-semibold truncate">{p.name}</div>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <StatusPill on={p.green} />
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] border ${
+                              stats?.watchOnline ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-amber-50 border-amber-200 text-amber-700"
+                            }`}>
+                              ⌚ {stats?.watchOnline ? "Watch online" : "Sync needed"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-700 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                          HR {stats?.heartRate} bpm
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />
+                          SpO₂ {stats?.spo2}%
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-block h-2 w-2 rounded-full bg-purple-500" />
+                          Steps {stats?.steps.toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="text-xs">
+                        <div className={`font-semibold ${stats?.battery < 40 ? "text-amber-700" : "text-emerald-700"}`}>
+                          {stats?.battery}%
+                        </div>
+                        <div className="text-gray-500">Battery</div>
+                      </div>
+                      <div className="text-xs text-gray-700">
+                        <div>{formatSyncTime(stats?.lastSync)}</div>
+                        <div className="text-gray-500">{stats?.watchOnline ? "Streaming" : "Awaiting contact"}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const formatSyncTime = (ts?: number) => {
+  if (!ts) return "No data";
+  const diff = Math.max(0, Date.now() - ts);
+  const mins = Math.round(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins === 1) return "1 min ago";
+  return `${mins} mins ago`;
+};
+
 // —————— Main App ——————
 export default function ColorConnectPrototype() {
   const [query, setQuery] = useState("");
@@ -300,13 +513,60 @@ export default function ColorConnectPrototype() {
   const [active, setActive] = useState<Resident | null>(null);
   const [myGreen, setMyGreen] = useState<boolean>(() => loadMyStatus());
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [health, setHealth] = useState<Record<string, HealthSnapshot>>(MOCK_HEALTH);
+  const [adminOpen, setAdminOpen] = useState(false);
 
   const { threads, send, maybeAutoReply } = useMessageStore();
 
   useEffect(() => saveMyStatus(myGreen), [myGreen]);
 
+  useEffect(() => {
+    // The demo opens in admin view so teams can immediately try the portal and smart-watch sync experience.
+    setAdminOpen(true);
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setHealth((prev) => {
+        const next = { ...prev };
+        Object.entries(next).forEach(([id, h]) => {
+          const drift = (val: number, delta: number, min: number, max: number) => {
+            const change = Math.round((Math.random() * delta * 2 - delta) * 10) / 10;
+            return Math.min(max, Math.max(min, val + change));
+          };
+          next[id] = {
+            ...h,
+            heartRate: drift(h.heartRate, 2, 58, 95),
+            spo2: drift(h.spo2, 0.5, 94, 100),
+            steps: h.steps + (h.watchOnline ? Math.floor(Math.random() * 120) : 0),
+            battery: Math.max(5, h.battery - (h.watchOnline ? Math.random() * 0.8 : Math.random() * 0.3)),
+            lastSync: h.watchOnline ? Date.now() : h.lastSync + 60000,
+            watchOnline: h.battery > 8 ? h.watchOnline : false,
+          };
+        });
+        return next;
+      });
+    }, 5000);
+    return () => clearInterval(id);
+  }, []);
+
   const openCount = useMemo(() => people.filter((p) => p.green).length, [people]);
   const newCount = useMemo(() => people.filter((p) => p.newResident).length, [people]);
+  const refreshHealth = () =>
+    setHealth((prev) => {
+      const next = { ...prev };
+      Object.entries(next).forEach(([id, h]) => {
+        next[id] = {
+          ...h,
+          heartRate: Math.min(96, Math.max(58, Math.round(h.heartRate + (Math.random() * 6 - 3)))),
+          spo2: Math.min(100, Math.max(95, Math.round(h.spo2 + (Math.random() * 2 - 1)))),
+          steps: h.steps + (h.watchOnline ? Math.floor(Math.random() * 200) : 0),
+          battery: Math.max(5, h.battery - Math.random() * 1.5),
+          lastSync: Date.now(),
+        };
+      });
+      return next;
+    });
 
   // sorted: green first, then new residents, then name
   const filtered = useMemo(() => {
@@ -358,8 +618,8 @@ export default function ColorConnectPrototype() {
                 <div className="space-y-1">
                   <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">ColorConnect</h1>
                   <p className="text-sm text-gray-600 max-w-2xl">
-                    A calm, high-contrast directory that mirrors your wristband status. Tap a neighbor to send
-                    a private note without sharing contact details.
+                    A calm, high-contrast directory that mirrors your wristband status and the green light on your
+                    Radiance watch. Tap a neighbor to send a private note without sharing contact details.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 justify-end">
@@ -394,6 +654,12 @@ export default function ColorConnectPrototype() {
                         {newCount}
                       </div>
                     </div>
+                    <button
+                      onClick={() => setAdminOpen(true)}
+                      className="ml-auto px-3 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow"
+                    >
+                      Admin login demo
+                    </button>
                   </div>
                 </div>
               </div>
@@ -467,6 +733,9 @@ export default function ColorConnectPrototype() {
                   <div className="mt-2 flex items-center gap-2">
                     <StatusPill on={p.green} />
                     <span className="text-[11px] text-gray-500">Tap to chat</span>
+                    <span className="text-[11px] inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      ⌚ Watch synced
+                    </span>
                   </div>
                 </div>
               </div>
@@ -489,6 +758,8 @@ export default function ColorConnectPrototype() {
       />
 
       <InviteModal open={inviteOpen} onClose={() => setInviteOpen(false)} />
+
+      <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} people={people} health={health} onRefresh={refreshHealth} />
 
       {/* Footer */}
       <footer className="text-center text-xs text-gray-500 py-6">

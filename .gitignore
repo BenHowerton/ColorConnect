@@ -1,0 +1,6 @@
+node_modules/
+dist/
+colorconnect/node_modules/
+colorconnect/dist/
+tsconfig.tsbuildinfo
+colorconnect/tsconfig.tsbuildinfo

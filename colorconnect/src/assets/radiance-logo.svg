@@ -1,0 +1,25 @@
+<svg width="220" height="220" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Radiance brand mark</title>
+  <desc id="desc">Stylized signal dancer surrounded by an orbital ring in Radiance greens.</desc>
+  <defs>
+    <linearGradient id="ring" x1="30" y1="20" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7CCB98"/>
+      <stop offset="1" stop-color="#3F8A6B"/>
+    </linearGradient>
+    <linearGradient id="figure" x1="120" y1="40" x2="110" y2="190" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#76C18A"/>
+      <stop offset="1" stop-color="#1F4D3A"/>
+    </linearGradient>
+  </defs>
+  <circle cx="110" cy="110" r="86" stroke="url(#ring)" stroke-width="9" fill="none" />
+  <circle cx="42" cy="108" r="6.5" fill="#7CCB98" />
+  <circle cx="175" cy="83" r="7" fill="#1F4D3A" />
+  <path d="M112 55c15 9.5 17.5 24 12 37.5C116 111 102 125 91 134c13-2.5 26-3 37 1 8.5 3.1 16 9.1 20.5 17.5-17.5-4-32.7-3-47.5 3.5-9.2 4.1-18.3 10.5-26 19 5-18.5 4.5-33 2-46-2.7-14.5-6.8-27.7-12-41 11 7.5 20.5 12 31.5 14 13 2.6 23.5-3 29-15 4.5-9.8 3.7-20.7-3-30.5Z" fill="url(#figure)"/>
+  <circle cx="118" cy="46" r="9.5" fill="#3F8A6B" />
+  <circle cx="83" cy="88" r="5.5" fill="#C5E9D4" />
+  <circle cx="125" cy="122" r="5.5" fill="#C5E9D4" />
+  <circle cx="95" cy="152" r="5" fill="#C5E9D4" />
+  <circle cx="142" cy="151" r="5" fill="#C5E9D4" />
+  <path d="M118 56c-14.5 8-26.5 23-30 38" stroke="#C5E9D4" stroke-width="3" stroke-linecap="round" />
+  <path d="M112 102c10 3 22 13.5 26 27" stroke="#C5E9D4" stroke-width="3" stroke-linecap="round" />
+</svg>

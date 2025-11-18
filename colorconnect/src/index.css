@@ -2,4 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: #111827;
+  background-color: #f2f8f3;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
 html, body, #root { height: 100%; }

@@ -25,6 +25,7 @@ type ThreadMap = Record<string, Message[]>;
 
 const LS_THREADS = "cc_threads_v1";
 const LS_MYSTATUS = "cc_mystatus_v1";
+const LS_PEOPLE = "cc_people_v1";
 
 const loadThreads = (): ThreadMap => {
   try {
@@ -53,6 +54,21 @@ const loadMyStatus = () => {
 const saveMyStatus = (on: boolean) => {
   try {
     localStorage.setItem(LS_MYSTATUS, JSON.stringify(on));
+  } catch {}
+};
+
+const loadPeople = () => {
+  try {
+    const raw = localStorage.getItem(LS_PEOPLE);
+    return raw ? (JSON.parse(raw) as Resident[]) : MOCK_RESIDENTS;
+  } catch {
+    return MOCK_RESIDENTS;
+  }
+};
+
+const savePeople = (list: Resident[]) => {
+  try {
+    localStorage.setItem(LS_PEOPLE, JSON.stringify(list));
   } catch {}
 };
 
@@ -296,13 +312,19 @@ export default function ColorConnectPrototype() {
   const [query, setQuery] = useState("");
   const [greenOnly, setGreenOnly] = useState(true);
   const [newOnly, setNewOnly] = useState(false);
-  const [people, setPeople] = useState<Resident[]>(MOCK_RESIDENTS);
+  const [people, setPeople] = useState<Resident[]>(() => loadPeople());
   const [active, setActive] = useState<Resident | null>(null);
   const [myGreen, setMyGreen] = useState<boolean>(() => loadMyStatus());
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [adminMode, setAdminMode] = useState(true);
+  const [newName, setNewName] = useState("");
+  const [newBio, setNewBio] = useState("");
+  const [newGreen, setNewGreen] = useState(true);
+  const [newFlaggedNew, setFlaggedNew] = useState(true);
 
   const { threads, send, maybeAutoReply } = useMessageStore();
 
+  useEffect(() => savePeople(people), [people]);
   useEffect(() => saveMyStatus(myGreen), [myGreen]);
 
   const openCount = useMemo(() => people.filter((p) => p.green).length, [people]);
@@ -325,6 +347,37 @@ export default function ColorConnectPrototype() {
 
   // demo: toggle my wristband (simulates physical toggle)
   const toggleMyGreen = () => setMyGreen((v) => !v);
+
+  const toggleResidentGreen = (id: string) =>
+    setPeople((list) => list.map((p) => (p.id === id ? { ...p, green: !p.green } : p)));
+
+  const toggleResidentNewFlag = (id: string) =>
+    setPeople((list) => list.map((p) => (p.id === id ? { ...p, newResident: !p.newResident } : p)));
+
+  const removeResident = (id: string) => setPeople((list) => list.filter((p) => p.id !== id));
+
+  const resetResidents = () => setPeople(MOCK_RESIDENTS);
+
+  const addResident = () => {
+    const name = newName.trim();
+    const bio = newBio.trim();
+    if (!name || !bio) return;
+    const id = Math.random().toString(36).slice(2);
+    setPeople((list) => [
+      ...list,
+      {
+        id,
+        name,
+        bio,
+        green: newGreen,
+        newResident: newFlaggedNew,
+      },
+    ]);
+    setNewName("");
+    setNewBio("");
+    setNewGreen(true);
+    setFlaggedNew(true);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-[#f2f8f3] to-[#e7f1eb] text-gray-900">
@@ -356,7 +409,12 @@ export default function ColorConnectPrototype() {
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-1">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">ColorConnect</h1>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">ColorConnect</h1>
+                    <span className="text-xs font-semibold uppercase tracking-wide px-2 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                      Admin demo view
+                    </span>
+                  </div>
                   <p className="text-sm text-gray-600 max-w-2xl">
                     A calm, high-contrast directory that mirrors your wristband status. Tap a neighbor to send
                     a private note without sharing contact details.
@@ -407,6 +465,108 @@ export default function ColorConnectPrototype() {
             <span className="text-gray-600">Residents choose when to light up in green. No phone numbers required.</span>
           </div>
         </header>
+
+        {/* Admin tooling */}
+        <div className="bg-white/90 border rounded-3xl shadow-sm p-4 sm:p-5 space-y-3">
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <div className="text-sm font-semibold text-gray-900">You are previewing the admin console</div>
+              <p className="text-sm text-gray-600">
+                Manage resident wristband status, mark newcomers, and seed the directory for live demos. Changes are
+                saved locally so you can refresh without losing your setup.
+              </p>
+            </div>
+            <label className="inline-flex items-center gap-2 text-sm bg-[#eff7f2] border px-3 py-2 rounded-2xl">
+              <input
+                type="checkbox"
+                className="h-4 w-4"
+                checked={adminMode}
+                onChange={(e) => setAdminMode(e.target.checked)}
+              />
+              <span>Admin controls {adminMode ? "on" : "off"}</span>
+            </label>
+          </div>
+          {adminMode && (
+            <div className="grid gap-3 sm:grid-cols-[1.2fr,1fr]">
+              <div className="space-y-2">
+                <div className="text-xs font-semibold uppercase text-gray-500">Add a resident for demos</div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <label className="flex-1 text-sm text-gray-700">
+                    <span className="sr-only">Name</span>
+                    <input
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      placeholder="Name"
+                      className="w-full border rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-300"
+                    />
+                  </label>
+                  <label className="flex-1 text-sm text-gray-700">
+                    <span className="sr-only">Bio</span>
+                    <input
+                      value={newBio}
+                      onChange={(e) => setNewBio(e.target.value)}
+                      placeholder="Interests, hobbies"
+                      className="w-full border rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-300"
+                    />
+                  </label>
+                </div>
+                <div className="flex flex-wrap items-center gap-3 text-sm">
+                  <label className="inline-flex items-center gap-2 select-none bg-[#eff7f2] px-3 py-1.5 rounded-xl border">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4"
+                      checked={newGreen}
+                      onChange={(e) => setNewGreen(e.target.checked)}
+                    />
+                    <span>Start as green</span>
+                  </label>
+                  <label className="inline-flex items-center gap-2 select-none bg-[#eff7f2] px-3 py-1.5 rounded-xl border">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4"
+                      checked={newFlaggedNew}
+                      onChange={(e) => setFlaggedNew(e.target.checked)}
+                    />
+                    <span>Mark as new resident</span>
+                  </label>
+                  <button
+                    onClick={addResident}
+                    className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-sm hover:bg-emerald-700"
+                  >
+                    Add to directory
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-xs font-semibold uppercase text-gray-500">Admin quick actions</div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={resetResidents}
+                    className="px-3 py-2 rounded-xl bg-white border text-sm hover:bg-gray-50 shadow-sm"
+                  >
+                    Restore default roster
+                  </button>
+                  <button
+                    onClick={() => setPeople((list) => list.map((p) => ({ ...p, green: true })))}
+                    className="px-3 py-2 rounded-xl bg-emerald-100 text-emerald-800 border border-emerald-200 text-sm hover:bg-emerald-200"
+                  >
+                    Set everyone to green
+                  </button>
+                  <button
+                    onClick={() => setPeople((list) => list.map((p) => ({ ...p, green: false })))}
+                    className="px-3 py-2 rounded-xl bg-gray-100 text-gray-800 border text-sm hover:bg-gray-200"
+                  >
+                    Pause all wristbands
+                  </button>
+                </div>
+                <p className="text-xs text-gray-600">
+                  Tip: use the filters below to demonstrate how the resident directory responds to real-time wristband
+                  updates. All changes persist until you tap "Restore default roster".
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Controls */}
         <div className="flex flex-col gap-3 bg-white/80 border rounded-3xl shadow-sm p-4 sm:p-5">
@@ -468,6 +628,40 @@ export default function ColorConnectPrototype() {
                     <StatusPill on={p.green} />
                     <span className="text-[11px] text-gray-500">Tap to chat</span>
                   </div>
+                  {adminMode && (
+                    <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleResidentGreen(p.id);
+                        }}
+                        className="px-2 py-1 rounded-lg border bg-white hover:bg-gray-50"
+                      >
+                        Toggle green
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleResidentNewFlag(p.id);
+                        }}
+                        className="px-2 py-1 rounded-lg border bg-white hover:bg-gray-50"
+                      >
+                        Toggle "New"
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeResident(p.id);
+                        }}
+                        className="px-2 py-1 rounded-lg border bg-red-50 text-red-700 hover:bg-red-100"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </button>

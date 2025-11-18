@@ -23,11 +23,26 @@ type Message = { id: string; fromMe: boolean; text: string; ts: number };
 
 type ThreadMap = Record<string, Message[]>;
 
+const APP_VERSION = "1.0.0";
+const LS_VERSION = "cc_app_version";
 const LS_THREADS = "cc_threads_v1";
 const LS_MYSTATUS = "cc_mystatus_v1";
 const LS_PEOPLE = "cc_people_v1";
 
+const ensureStorageVersion = () => {
+  try {
+    const storedVersion = localStorage.getItem(LS_VERSION);
+    if (storedVersion !== APP_VERSION) {
+      localStorage.removeItem(LS_PEOPLE);
+      localStorage.removeItem(LS_THREADS);
+      localStorage.removeItem(LS_MYSTATUS);
+      localStorage.setItem(LS_VERSION, APP_VERSION);
+    }
+  } catch {}
+};
+
 const loadThreads = (): ThreadMap => {
+  ensureStorageVersion();
   try {
     const raw = localStorage.getItem(LS_THREADS);
     return raw ? (JSON.parse(raw) as ThreadMap) : {};
@@ -43,6 +58,7 @@ const saveThreads = (t: ThreadMap) => {
 };
 
 const loadMyStatus = () => {
+  ensureStorageVersion();
   try {
     const raw = localStorage.getItem(LS_MYSTATUS);
     return raw ? JSON.parse(raw) === true : true; // default ON to encourage trials
@@ -58,6 +74,7 @@ const saveMyStatus = (on: boolean) => {
 };
 
 const loadPeople = () => {
+  ensureStorageVersion();
   try {
     const raw = localStorage.getItem(LS_PEOPLE);
     return raw ? (JSON.parse(raw) as Resident[]) : MOCK_RESIDENTS;

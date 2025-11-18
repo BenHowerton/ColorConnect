@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import logo from "./assets/radiance-logo.svg";
 
 // ColorConnect – Simple, demo‑ready web prototype for 55+ communities
 // Core goals
@@ -53,6 +54,13 @@ const saveMyStatus = (on: boolean) => {
   try {
     localStorage.setItem(LS_MYSTATUS, JSON.stringify(on));
   } catch {}
+};
+
+const BRAND_COLORS = {
+  primary: "#3F8A6B",
+  glow: "#9DD7AB",
+  deep: "#1F4D3A",
+  mist: "#EFF7F2",
 };
 
 // Avatar helper (placeholder initial if missing)
@@ -297,6 +305,9 @@ export default function ColorConnectPrototype() {
 
   useEffect(() => saveMyStatus(myGreen), [myGreen]);
 
+  const openCount = useMemo(() => people.filter((p) => p.green).length, [people]);
+  const newCount = useMemo(() => people.filter((p) => p.newResident).length, [people]);
+
   // sorted: green first, then new residents, then name
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -316,60 +327,125 @@ export default function ColorConnectPrototype() {
   const toggleMyGreen = () => setMyGreen((v) => !v);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white text-gray-900">
-      <div className="max-w-5xl mx-auto p-4 sm:p-6">
-        {/* Header */}
-        <header className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold">The Meadows – Connect</h1>
-            <p className="text-sm text-gray-600">Green means go. Meet neighbors when they're open to it.</p>
+    <div className="min-h-screen bg-gradient-to-b from-white via-[#f2f8f3] to-[#e7f1eb] text-gray-900">
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
+        {/* Radiance brand hero */}
+        <header className="overflow-hidden rounded-3xl border bg-white/80 shadow-sm backdrop-blur">
+          <div className="grid gap-4 sm:gap-6 sm:grid-cols-[auto,1fr] items-center p-4 sm:p-6">
+            <div className="relative">
+              <div className="h-20 w-20 rounded-full bg-white border shadow-inner flex items-center justify-center overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={logo} alt="Radiance logo" className="h-full w-full object-contain" />
+              </div>
+              <div
+                className="absolute inset-[-14px] rounded-full -z-10"
+                style={{
+                  background: "radial-gradient(circle at 40% 30%, rgba(157,215,171,0.45), transparent 55%)",
+                }}
+              />
+            </div>
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide">
+                <span
+                  className="px-2 py-1 rounded-full"
+                  style={{ backgroundColor: BRAND_COLORS.mist, color: BRAND_COLORS.deep }}
+                >
+                  Powered by Radiance
+                </span>
+                <span className="text-gray-500 normal-case">Simple signals – powerful connections</span>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="space-y-1">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">ColorConnect</h1>
+                  <p className="text-sm text-gray-600 max-w-2xl">
+                    A calm, high-contrast directory that mirrors your wristband status. Tap a neighbor to send
+                    a private note without sharing contact details.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-3 justify-end">
+                  <div className="px-3 py-2 rounded-2xl border bg-white/70 shadow-sm">
+                    <div className="text-[11px] uppercase font-semibold text-gray-500">My wristband</div>
+                    <button
+                      onClick={toggleMyGreen}
+                      className={`mt-1 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium border transition ${
+                        myGreen
+                          ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                          : "bg-gray-100 border-gray-200 text-gray-600"
+                      }`}
+                      aria-pressed={myGreen}
+                    >
+                      <span
+                        className={`inline-block h-3 w-3 rounded-sm ${myGreen ? "bg-emerald-500" : "bg-gray-400"}`}
+                      />
+                      {myGreen ? "Open to connect" : "Not right now"}
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-3 px-3 py-2 rounded-2xl border bg-[#eff7f2] shadow-sm">
+                    <div>
+                      <div className="text-xs text-gray-500">Open now</div>
+                      <div className="font-semibold text-lg" style={{ color: BRAND_COLORS.primary }}>
+                        {openCount}
+                      </div>
+                    </div>
+                    <div className="h-10 w-px bg-gray-200" aria-hidden />
+                    <div>
+                      <div className="text-xs text-gray-500">New neighbors</div>
+                      <div className="font-semibold text-lg" style={{ color: BRAND_COLORS.deep }}>
+                        {newCount}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-3 bg-white border rounded-2xl px-3 py-1.5 shadow-sm">
-            <span className="text-sm">My wristband:</span>
-            <button
-              onClick={toggleMyGreen}
-              className={`px-2 py-1 rounded-xl text-sm border ${
-                myGreen ? "bg-green-100 border-green-200" : "bg-gray-100 border-gray-200"
-              }`}
-              aria-pressed={myGreen}
-            >
-              <span className={`inline-block h-3 w-3 rounded-sm ${myGreen ? "bg-green-500" : "bg-gray-400"}`} />
-              <span className="ml-2">{myGreen ? "Open" : "Not now"}</span>
-            </button>
+          <div className="border-t bg-gradient-to-r from-[#e8f5ed] via-white to-[#e0f0e7] px-4 sm:px-6 py-3 text-sm text-gray-700 flex flex-wrap items-center gap-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: BRAND_COLORS.mist }}>
+              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: BRAND_COLORS.primary }} />
+              Quiet signal tech by Radiance
+            </div>
+            <span className="text-gray-600">Residents choose when to light up in green. No phone numbers required.</span>
           </div>
         </header>
 
         {/* Controls */}
-        <div className="mt-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-          <div className="flex-1 flex items-center gap-2 bg-white border rounded-2xl px-3 py-2 shadow-sm">
-            <span aria-hidden>🔎</span>
-            <label className="sr-only" htmlFor="search">Search by name or interests</label>
-            <input
-              id="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name or interests"
-              className="w-full outline-none"
-            />
+        <div className="flex flex-col gap-3 bg-white/80 border rounded-3xl shadow-sm p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            <div className="flex-1 flex items-center gap-2 bg-[#f6fbf8] border border-[#d9eade] rounded-2xl px-3 py-2 shadow-inner">
+              <span aria-hidden>🔎</span>
+              <label className="sr-only" htmlFor="search">Search by name or interests</label>
+              <input
+                id="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by name or interests"
+                className="w-full bg-transparent outline-none"
+              />
+            </div>
+            <label className="inline-flex items-center gap-2 select-none bg-[#eff7f2] px-3 py-2 rounded-2xl border text-sm">
+              <input type="checkbox" className="h-4 w-4" checked={greenOnly} onChange={(e) => setGreenOnly(e.target.checked)} />
+              <span>Show only green</span>
+            </label>
+            <label className="inline-flex items-center gap-2 select-none bg-[#eff7f2] px-3 py-2 rounded-2xl border text-sm">
+              <input type="checkbox" className="h-4 w-4" checked={newOnly} onChange={(e) => setNewOnly(e.target.checked)} />
+              <span>Show new residents</span>
+            </label>
+            <button
+              onClick={() => setInviteOpen(true)}
+              className="ml-auto px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 shadow"
+            >
+              Post activity invite
+            </button>
           </div>
-          <label className="inline-flex items-center gap-2 select-none">
-            <input type="checkbox" className="h-4 w-4" checked={greenOnly} onChange={(e) => setGreenOnly(e.target.checked)} />
-            <span className="text-sm">Show only green</span>
-          </label>
-          <label className="inline-flex items-center gap-2 select-none">
-            <input type="checkbox" className="h-4 w-4" checked={newOnly} onChange={(e) => setNewOnly(e.target.checked)} />
-            <span className="text-sm">Show new residents</span>
-          </label>
-          <button
-            onClick={() => setInviteOpen(true)}
-            className="ml-auto px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700"
-          >
-            Post activity invite
-          </button>
+          <div className="flex flex-wrap gap-2 text-xs text-gray-600">
+            <span className="px-2 py-1 rounded-full bg-[#eff7f2] border text-[11px] font-semibold">Comfortable typography</span>
+            <span className="px-2 py-1 rounded-full bg-[#eff7f2] border text-[11px] font-semibold">Readable cards</span>
+            <span className="px-2 py-1 rounded-full bg-[#eff7f2] border text-[11px] font-semibold">Private, local messaging</span>
+          </div>
         </div>
 
         {/* Directory */}
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map((p) => (
             <button
               key={p.id}
@@ -377,18 +453,21 @@ export default function ColorConnectPrototype() {
                 setActive(p);
                 maybeAutoReply(p.id);
               }}
-              className="text-left bg-white border rounded-2xl p-3 hover:shadow-md transition-shadow shadow-sm"
+              className="text-left bg-white/90 border rounded-2xl p-3 hover:shadow-lg transition-shadow shadow-sm backdrop-blur"
               aria-label={`Open profile for ${p.name}`}
             >
               <div className="flex items-start gap-3">
                 <Avatar alt={p.name} />
                 <div className="min-w-0">
-                  <div className="flex items-center flex-wrap">
-                    <div className="font-semibold truncate mr-2">{p.name}</div>
+                  <div className="flex items-center flex-wrap gap-1">
+                    <div className="font-semibold truncate mr-2 text-gray-900">{p.name}</div>
                     {p.newResident && <NewBadge />}
                   </div>
                   <div className="text-sm text-gray-600 line-clamp-2">{p.bio}</div>
-                  <div className="mt-2"><StatusPill on={p.green} /></div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <StatusPill on={p.green} />
+                    <span className="text-[11px] text-gray-500">Tap to chat</span>
+                  </div>
                 </div>
               </div>
             </button>

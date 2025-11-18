@@ -25,6 +25,15 @@ type ThreadMap = Record<string, Message[]>;
 
 const LS_THREADS = "cc_threads_v1";
 const LS_MYSTATUS = "cc_mystatus_v1";
+const LS_USER = "cc_user_v1";
+
+type User = { name: string; email: string };
+
+const TEST_USER = {
+  name: "Demo Neighbor",
+  email: "resident@radiance.com",
+  password: "connect123",
+};
 
 const loadThreads = (): ThreadMap => {
   try {
@@ -53,6 +62,25 @@ const loadMyStatus = () => {
 const saveMyStatus = (on: boolean) => {
   try {
     localStorage.setItem(LS_MYSTATUS, JSON.stringify(on));
+  } catch {}
+};
+
+const loadUser = (): User | null => {
+  try {
+    const raw = localStorage.getItem(LS_USER);
+    return raw ? (JSON.parse(raw) as User) : null;
+  } catch {
+    return null;
+  }
+};
+
+const saveUser = (user: User | null) => {
+  try {
+    if (user) {
+      localStorage.setItem(LS_USER, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(LS_USER);
+    }
   } catch {}
 };
 
@@ -300,10 +328,34 @@ export default function ColorConnectPrototype() {
   const [active, setActive] = useState<Resident | null>(null);
   const [myGreen, setMyGreen] = useState<boolean>(() => loadMyStatus());
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(() => loadUser());
+  const [loginEmail, setLoginEmail] = useState(TEST_USER.email);
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
 
   const { threads, send, maybeAutoReply } = useMessageStore();
 
   useEffect(() => saveMyStatus(myGreen), [myGreen]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    const normalizedEmail = loginEmail.trim().toLowerCase();
+
+    if (normalizedEmail === TEST_USER.email.toLowerCase() && loginPassword === TEST_USER.password) {
+      const authedUser = { name: TEST_USER.name, email: TEST_USER.email };
+      setUser(authedUser);
+      saveUser(authedUser);
+      setLoginPassword("");
+      setLoginError("");
+    } else {
+      setLoginError("Incorrect email or password. Use the demo credentials below.");
+    }
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    saveUser(null);
+  };
 
   const openCount = useMemo(() => people.filter((p) => p.green).length, [people]);
   const newCount = useMemo(() => people.filter((p) => p.newResident).length, [people]);
@@ -325,6 +377,96 @@ export default function ColorConnectPrototype() {
 
   // demo: toggle my wristband (simulates physical toggle)
   const toggleMyGreen = () => setMyGreen((v) => !v);
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-white via-[#f1f7f3] to-[#e1efe6] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white/90 border rounded-3xl shadow-xl p-6 sm:p-8 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-2xl bg-[#eff7f2] border flex items-center justify-center">
+              <span className="text-xl" aria-hidden>
+                🌈
+              </span>
+            </div>
+            <div>
+              <div className="text-xs uppercase font-semibold tracking-wide text-gray-500">Welcome</div>
+              <h1 className="text-xl font-bold text-gray-900">Sign in to ColorConnect</h1>
+              <p className="text-sm text-gray-600">Use the demo credentials to explore the experience.</p>
+            </div>
+          </div>
+
+          {loginError && (
+            <div className="rounded-2xl bg-red-50 border border-red-100 text-red-700 text-sm px-3 py-2">{loginError}</div>
+          )}
+
+          <form className="space-y-3" onSubmit={handleLogin}>
+            <div className="space-y-1">
+              <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                className="w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-300"
+                required
+              />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                className="w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-300"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full rounded-xl bg-emerald-600 text-white font-semibold py-2.5 hover:bg-emerald-700"
+            >
+              Sign in
+            </button>
+          </form>
+
+          <div className="rounded-2xl bg-[#f5fbf7] border border-[#d9eade] p-3 text-sm text-gray-700 space-y-1">
+              <div className="font-semibold text-gray-900">Demo account</div>
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <div className="text-xs text-gray-500">Email</div>
+                  <div className="font-mono text-sm">{TEST_USER.email}</div>
+                </div>
+                <button
+                  onClick={() => setLoginEmail(TEST_USER.email)}
+                  type="button"
+                  className="text-xs px-3 py-1 rounded-full bg-white border hover:bg-gray-50"
+                >
+                  Autofill
+                </button>
+              </div>
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <div className="text-xs text-gray-500">Password</div>
+                <div className="font-mono text-sm">{TEST_USER.password}</div>
+              </div>
+              <button
+                onClick={() => setLoginPassword(TEST_USER.password)}
+                className="text-xs px-3 py-1 rounded-full bg-white border hover:bg-gray-50"
+                type="button"
+              >
+                Autofill
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-[#f2f8f3] to-[#e7f1eb] text-gray-900">
@@ -391,12 +533,25 @@ export default function ColorConnectPrototype() {
                     <div>
                       <div className="text-xs text-gray-500">New neighbors</div>
                       <div className="font-semibold text-lg" style={{ color: BRAND_COLORS.deep }}>
-                        {newCount}
-                      </div>
+                      {newCount}
                     </div>
+                  </div>
+                  <div className="px-3 py-2 rounded-2xl border bg-white/70 shadow-sm flex items-center gap-3">
+                    <div>
+                      <div className="text-xs text-gray-500">Signed in as</div>
+                      <div className="font-semibold text-sm text-gray-900">{user.name}</div>
+                      <div className="text-xs text-gray-500">{user.email}</div>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="text-xs px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 border"
+                    >
+                      Log out
+                    </button>
                   </div>
                 </div>
               </div>
+            </div>
             </div>
           </div>
           <div className="border-t bg-gradient-to-r from-[#e8f5ed] via-white to-[#e0f0e7] px-4 sm:px-6 py-3 text-sm text-gray-700 flex flex-wrap items-center gap-3">

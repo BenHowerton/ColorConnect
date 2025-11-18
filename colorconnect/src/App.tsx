@@ -25,6 +25,7 @@ type ThreadMap = Record<string, Message[]>;
 
 const LS_THREADS = "cc_threads_v1";
 const LS_MYSTATUS = "cc_mystatus_v1";
+const LS_MYNOTE = "cc_mynote_v1";
 
 const loadThreads = (): ThreadMap => {
   try {
@@ -53,6 +54,21 @@ const loadMyStatus = () => {
 const saveMyStatus = (on: boolean) => {
   try {
     localStorage.setItem(LS_MYSTATUS, JSON.stringify(on));
+  } catch {}
+};
+
+const loadMyNote = () => {
+  try {
+    const raw = localStorage.getItem(LS_MYNOTE);
+    return raw ?? "Available for morning walks and coffee chats.";
+  } catch {
+    return "Available for morning walks and coffee chats.";
+  }
+};
+
+const saveMyNote = (note: string) => {
+  try {
+    localStorage.setItem(LS_MYNOTE, note);
   } catch {}
 };
 
@@ -299,13 +315,15 @@ export default function ColorConnectPrototype() {
   const [people, setPeople] = useState<Resident[]>(MOCK_RESIDENTS);
   const [active, setActive] = useState<Resident | null>(null);
   const [myGreen, setMyGreen] = useState<boolean>(() => loadMyStatus());
+  const [myNote, setMyNote] = useState<string>(() => loadMyNote());
   const [inviteOpen, setInviteOpen] = useState(false);
 
   const { threads, send, maybeAutoReply } = useMessageStore();
 
   useEffect(() => saveMyStatus(myGreen), [myGreen]);
+  useEffect(() => saveMyNote(myNote), [myNote]);
 
-  const openCount = useMemo(() => people.filter((p) => p.green).length, [people]);
+  const openCount = useMemo(() => people.filter((p) => p.green).length + (myGreen ? 1 : 0), [people, myGreen]);
   const newCount = useMemo(() => people.filter((p) => p.newResident).length, [people]);
 
   // sorted: green first, then new residents, then name
@@ -379,6 +397,9 @@ export default function ColorConnectPrototype() {
                       />
                       {myGreen ? "Open to connect" : "Not right now"}
                     </button>
+                    <div className="mt-1 text-[11px] text-gray-500">
+                      You appear {myGreen ? "green and available" : "gray and unavailable"} to neighbors.
+                    </div>
                   </div>
                   <div className="flex items-center gap-3 px-3 py-2 rounded-2xl border bg-[#eff7f2] shadow-sm">
                     <div>
@@ -444,8 +465,52 @@ export default function ColorConnectPrototype() {
           </div>
         </div>
 
+        {/* My status preview */}
+        <div className="bg-white/85 border rounded-3xl shadow-sm p-4 sm:p-5 flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Avatar alt="You" />
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="font-semibold">How neighbors see you</div>
+                  <StatusPill on={myGreen} />
+                </div>
+                <div className="text-sm text-gray-600">This preview updates instantly as you change your wristband.</div>
+              </div>
+            </div>
+            <div className="text-xs text-gray-500 bg-[#eff7f2] border border-[#d9eade] px-3 py-2 rounded-2xl self-start">
+              Saved locally · no phone number or email shared
+            </div>
+          </div>
+          <label className="block">
+            <span className="text-sm font-medium text-gray-800">Your hello message</span>
+            <div className="mt-1 text-xs text-gray-500">Let neighbors know what you enjoy. Stored only on this device.</div>
+            <textarea
+              value={myNote}
+              onChange={(e) => setMyNote(e.target.value.slice(0, 140))}
+              rows={2}
+              className="mt-2 w-full border rounded-2xl p-3 text-sm outline-none focus:ring-2 focus:ring-emerald-300"
+              placeholder="Example: Up for coffee chats and short walks this week."
+            />
+            <div className="mt-1 text-[11px] text-gray-500">{myNote.length}/140 characters</div>
+          </label>
+        </div>
+
         {/* Directory */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="text-left bg-white/90 border rounded-2xl p-3 shadow-sm backdrop-blur">
+            <div className="flex items-start gap-3">
+              <Avatar alt="You" />
+              <div className="min-w-0 space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="font-semibold text-gray-900">You</div>
+                  <StatusPill on={myGreen} />
+                </div>
+                <div className="text-sm text-gray-700 whitespace-pre-line">{myNote || "Available to connect."}</div>
+                <div className="mt-2 text-[11px] text-gray-500">Your preview isn&apos;t shown to others in this demo.</div>
+              </div>
+            </div>
+          </div>
           {filtered.map((p) => (
             <button
               key={p.id}

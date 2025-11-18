@@ -328,9 +328,27 @@ export default function ColorConnectPrototype() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-[#f2f8f3] to-[#e7f1eb] text-gray-900">
-      <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
+      {/* Mobile app chrome */}
+      <div className="sticky top-0 z-30 backdrop-blur-md bg-white/70 border-b border-white/60 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="h-9 w-9 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-semibold">
+              CC
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">Radiance</div>
+              <div className="font-semibold text-gray-900">ColorConnect</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
+            Live prototype
+          </div>
+        </div>
+      </div>
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6 pb-28 sm:pb-10">
         {/* Radiance brand hero */}
-        <header className="overflow-hidden rounded-3xl border bg-white/80 shadow-sm backdrop-blur">
+        <header className="overflow-hidden rounded-3xl border bg-white/90 shadow-sm backdrop-blur">
           <div className="grid gap-4 sm:gap-6 sm:grid-cols-[auto,1fr] items-center p-4 sm:p-6">
             <div className="relative">
               <div className="h-20 w-20 rounded-full bg-white border shadow-inner flex items-center justify-center overflow-hidden">
@@ -409,9 +427,9 @@ export default function ColorConnectPrototype() {
         </header>
 
         {/* Controls */}
-        <div className="flex flex-col gap-3 bg-white/80 border rounded-3xl shadow-sm p-4 sm:p-5">
-          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-            <div className="flex-1 flex items-center gap-2 bg-[#f6fbf8] border border-[#d9eade] rounded-2xl px-3 py-2 shadow-inner">
+        <div className="flex flex-col gap-3 bg-white/90 border rounded-3xl shadow-sm p-4 sm:p-5">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2 bg-[#f6fbf8] border border-[#d9eade] rounded-2xl px-3 py-2 shadow-inner">
               <span aria-hidden>🔎</span>
               <label className="sr-only" htmlFor="search">Search by name or interests</label>
               <input
@@ -422,20 +440,22 @@ export default function ColorConnectPrototype() {
                 className="w-full bg-transparent outline-none"
               />
             </div>
-            <label className="inline-flex items-center gap-2 select-none bg-[#eff7f2] px-3 py-2 rounded-2xl border text-sm">
-              <input type="checkbox" className="h-4 w-4" checked={greenOnly} onChange={(e) => setGreenOnly(e.target.checked)} />
-              <span>Show only green</span>
-            </label>
-            <label className="inline-flex items-center gap-2 select-none bg-[#eff7f2] px-3 py-2 rounded-2xl border text-sm">
-              <input type="checkbox" className="h-4 w-4" checked={newOnly} onChange={(e) => setNewOnly(e.target.checked)} />
-              <span>Show new residents</span>
-            </label>
-            <button
-              onClick={() => setInviteOpen(true)}
-              className="ml-auto px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 shadow"
-            >
-              Post activity invite
-            </button>
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-2 px-2 sm:mx-0 sm:px-0">
+              <label className="inline-flex items-center gap-2 select-none bg-[#eff7f2] px-3 py-2 rounded-2xl border text-sm whitespace-nowrap">
+                <input type="checkbox" className="h-4 w-4" checked={greenOnly} onChange={(e) => setGreenOnly(e.target.checked)} />
+                <span>Show only green</span>
+              </label>
+              <label className="inline-flex items-center gap-2 select-none bg-[#eff7f2] px-3 py-2 rounded-2xl border text-sm whitespace-nowrap">
+                <input type="checkbox" className="h-4 w-4" checked={newOnly} onChange={(e) => setNewOnly(e.target.checked)} />
+                <span>Show new residents</span>
+              </label>
+              <button
+                onClick={() => setInviteOpen(true)}
+                className="ml-auto sm:ml-0 px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 shadow whitespace-nowrap"
+              >
+                Post activity invite
+              </button>
+            </div>
           </div>
           <div className="flex flex-wrap gap-2 text-xs text-gray-600">
             <span className="px-2 py-1 rounded-full bg-[#eff7f2] border text-[11px] font-semibold">Comfortable typography</span>
@@ -453,7 +473,7 @@ export default function ColorConnectPrototype() {
                 setActive(p);
                 maybeAutoReply(p.id);
               }}
-              className="text-left bg-white/90 border rounded-2xl p-3 hover:shadow-lg transition-shadow shadow-sm backdrop-blur"
+              className="text-left bg-white/90 border rounded-2xl p-3 hover:-translate-y-0.5 transition shadow-sm hover:shadow-lg backdrop-blur"
               aria-label={`Open profile for ${p.name}`}
             >
               <div className="flex items-start gap-3">
@@ -489,6 +509,38 @@ export default function ColorConnectPrototype() {
       />
 
       <InviteModal open={inviteOpen} onClose={() => setInviteOpen(false)} />
+
+      {/* Bottom navigation for mobile */}
+      <nav className="fixed bottom-0 left-0 right-0 z-30 sm:hidden">
+        <div
+          className="mx-auto max-w-6xl bg-white/95 backdrop-blur shadow-lg border-t flex justify-around py-2 text-xs text-gray-600"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 8px)" }}
+        >
+          <button className="flex flex-col items-center gap-1 px-3 py-1 rounded-2xl hover:bg-gray-100">
+            <span className="text-lg" aria-hidden>🏠</span>
+            Home
+          </button>
+          <button className="flex flex-col items-center gap-1 px-3 py-1 rounded-2xl hover:bg-gray-100">
+            <span className="text-lg" aria-hidden>📇</span>
+            Directory
+          </button>
+          <button
+            onClick={() => setInviteOpen(true)}
+            className="flex flex-col items-center gap-1 px-3 py-1 rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700"
+          >
+            <span className="text-lg" aria-hidden>➕</span>
+            Invite
+          </button>
+          <button className="flex flex-col items-center gap-1 px-3 py-1 rounded-2xl hover:bg-gray-100">
+            <span className="text-lg" aria-hidden>💬</span>
+            Messages
+          </button>
+          <button className="flex flex-col items-center gap-1 px-3 py-1 rounded-2xl hover:bg-gray-100">
+            <span className="text-lg" aria-hidden>⚙️</span>
+            Settings
+          </button>
+        </div>
+      </nav>
 
       {/* Footer */}
       <footer className="text-center text-xs text-gray-500 py-6">

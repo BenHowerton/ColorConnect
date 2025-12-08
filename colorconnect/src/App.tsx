@@ -329,6 +329,29 @@ export default function ColorConnectPrototype() {
 
   const openCount = useMemo(() => people.filter((p) => p.green).length, [people]);
   const newCount = useMemo(() => people.filter((p) => p.newResident).length, [people]);
+  const totalResidents = people.length;
+  const threadsCount = useMemo(() => Object.keys(threads).length, [threads]);
+  const totalMessages = useMemo(
+    () =>
+      Object.values(threads).reduce((acc, thread) => {
+        return acc + thread.length;
+      }, 0),
+    [threads]
+  );
+  const greenPct = totalResidents ? Math.round((openCount / totalResidents) * 100) : 0;
+  const newPct = totalResidents ? Math.round((newCount / totalResidents) * 100) : 0;
+  const latestThreads = useMemo(() => {
+    return Object.entries(threads)
+      .map(([id, messages]) => ({
+        id,
+        last: messages[messages.length - 1],
+        count: messages.length,
+        person: people.find((p) => p.id === id),
+      }))
+      .filter((item) => item.person)
+      .sort((a, b) => (b.last?.ts || 0) - (a.last?.ts || 0))
+      .slice(0, 4);
+  }, [threads, people]);
 
   // sorted: green first, then new residents, then name
   const filtered = useMemo(() => {
@@ -567,6 +590,187 @@ export default function ColorConnectPrototype() {
             </div>
           )}
         </div>
+
+        {adminMode && (
+          <div className="bg-white/90 border rounded-3xl shadow-sm p-4 sm:p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <div className="text-sm font-semibold text-gray-900">Community vitals</div>
+                <p className="text-sm text-gray-600">
+                  A quick, at-a-glance dashboard for live demos. Metrics update instantly as you change statuses.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" aria-hidden />
+                Live admin view
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-2xl border bg-gradient-to-br from-[#eff7f2] to-white p-3 shadow-sm">
+                <div className="text-xs text-gray-500 font-semibold uppercase">Open now</div>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <div className="text-3xl font-bold" style={{ color: BRAND_COLORS.primary }}>
+                    {openCount}
+                  </div>
+                  <span className="text-sm text-gray-600">of {totalResidents}</span>
+                </div>
+                <div className="mt-2 h-2 rounded-full bg-gray-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${greenPct}%`, backgroundColor: BRAND_COLORS.primary }}
+                    aria-label={`Green participation at ${greenPct}%`}
+                  />
+                </div>
+                <div className="mt-1 text-xs text-gray-600">{greenPct}% wearing green bands</div>
+              </div>
+
+              <div className="rounded-2xl border bg-gradient-to-br from-[#fff8ec] to-white p-3 shadow-sm">
+                <div className="text-xs text-gray-500 font-semibold uppercase">New residents</div>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <div className="text-3xl font-bold text-amber-700">{newCount}</div>
+                  <span className="text-sm text-gray-600">ready to welcome</span>
+                </div>
+                <div className="mt-2 h-2 rounded-full bg-gray-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-amber-400"
+                    style={{ width: `${newPct}%` }}
+                    aria-label={`New resident concentration at ${newPct}%`}
+                  />
+                </div>
+                <div className="mt-1 text-xs text-gray-600">{newPct}% of the directory</div>
+              </div>
+
+              <div className="rounded-2xl border bg-gradient-to-br from-[#eef2ff] to-white p-3 shadow-sm">
+                <div className="text-xs text-gray-500 font-semibold uppercase">Members</div>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <div className="text-3xl font-bold text-indigo-700">{totalResidents}</div>
+                  <span className="text-sm text-gray-600">tracked residents</span>
+                </div>
+                <div className="mt-2 text-xs text-indigo-700 font-semibold">Directory is demo-ready</div>
+                <p className="text-xs text-gray-600 mt-1">Use quick actions to seed a brand new roster instantly.</p>
+              </div>
+
+              <div className="rounded-2xl border bg-gradient-to-br from-[#f0f5ff] to-white p-3 shadow-sm">
+                <div className="text-xs text-gray-500 font-semibold uppercase">Conversations</div>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <div className="text-3xl font-bold text-blue-700">{threadsCount}</div>
+                  <span className="text-sm text-gray-600">active threads</span>
+                </div>
+                <div className="mt-1 text-xs text-gray-600">{totalMessages} total messages exchanged</div>
+                <p className="text-xs text-gray-600 mt-1">Open a resident card to add a live demo conversation.</p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 lg:grid-cols-[1.2fr,0.9fr]">
+              <div className="rounded-2xl border bg-white p-3 sm:p-4 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-semibold uppercase text-gray-500">Member roster</div>
+                    <p className="text-sm text-gray-600">Overview of everyone in the directory</p>
+                  </div>
+                  <span className="text-[11px] font-semibold text-gray-500 px-2 py-1 rounded-full bg-gray-100 border">
+                    {totalResidents} total
+                  </span>
+                </div>
+                <div className="mt-3 overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-xs uppercase tracking-wide text-gray-500 border-b">
+                        <th className="py-2 pr-4">Name</th>
+                        <th className="py-2 pr-4">Status</th>
+                        <th className="py-2 pr-4">Flags</th>
+                        <th className="py-2 pr-4 text-right">Convos</th>
+                        <th className="py-2 pl-2 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {people.map((p) => {
+                        const msgCount = threads[p.id]?.length || 0;
+                        return (
+                          <tr key={p.id} className="align-middle">
+                            <td className="py-2 pr-4">
+                              <div className="font-semibold text-gray-900">{p.name}</div>
+                              <div className="text-xs text-gray-600 line-clamp-1">{p.bio}</div>
+                            </td>
+                            <td className="py-2 pr-4">
+                              <StatusPill on={p.green} />
+                            </td>
+                            <td className="py-2 pr-4 text-xs text-gray-700">
+                              <div className="flex items-center gap-2">
+                                {p.newResident ? <NewBadge /> : <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-600">Established</span>}
+                              </div>
+                            </td>
+                            <td className="py-2 pr-4 text-right text-xs text-gray-700">{msgCount} msgs</td>
+                            <td className="py-2 pl-2 text-right">
+                              <div className="inline-flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActive(p);
+                                    maybeAutoReply(p.id);
+                                  }}
+                                  className="px-2 py-1 rounded-lg border bg-white hover:bg-gray-50 text-xs"
+                                >
+                                  Open card
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleResidentGreen(p.id)}
+                                  className="px-2 py-1 rounded-lg border bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-xs"
+                                >
+                                  Toggle green
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border bg-white p-3 sm:p-4 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-semibold uppercase text-gray-500">Recent conversations</div>
+                    <p className="text-sm text-gray-600">Shows only demo messages stored on this device.</p>
+                  </div>
+                  <span className="text-[11px] font-semibold text-blue-700 px-2 py-1 rounded-full bg-blue-50 border border-blue-100">
+                    {threadsCount} active
+                  </span>
+                </div>
+                {latestThreads.length === 0 ? (
+                  <div className="text-sm text-gray-600">Start a chat from any resident card to see activity here.</div>
+                ) : (
+                  <ul className="space-y-2">
+                    {latestThreads.map(({ id, person, last, count }) => (
+                      <li
+                        key={id}
+                        className="flex items-start gap-3 rounded-xl border bg-[#f7fafe] p-3"
+                      >
+                        <Avatar alt={person?.name || "Resident"} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <div className="font-semibold text-gray-900">{person?.name}</div>
+                            <span className="text-[11px] text-gray-500">{count} msgs</span>
+                          </div>
+                          <div className="text-xs text-gray-600 line-clamp-2">
+                            {last?.text || "Conversation started"}
+                          </div>
+                          <div className="mt-1 text-[11px] text-gray-500">
+                            {last ? new Date(last.ts).toLocaleString() : "No messages yet"}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Controls */}
         <div className="flex flex-col gap-3 bg-white/80 border rounded-3xl shadow-sm p-4 sm:p-5">
